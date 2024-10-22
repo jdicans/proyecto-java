@@ -15,12 +15,7 @@ CREATE TABLE Habitaciones (
     Estado ENUM('disponible', 'reservado', 'en mantenimiento') NOT NULL
 );
 
--- Crear la tabla de Servicios
-CREATE TABLE Servicios (
-    ID INT AUTO_INCREMENT PRIMARY KEY,
-    Descripcion VARCHAR(255) NOT NULL,
-    Costo DECIMAL(10, 2) NOT NULL
-);
+
 
 -- Crear la tabla de Reservas
 CREATE TABLE Reservas (

@@ -1,0 +1,35 @@
+-- Crear la tabla de Clientes
+CREATE TABLE Clientes (
+    ID INT AUTO_INCREMENT PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    Apellidos VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) NOT NULL UNIQUE,
+    Telefono VARCHAR(15) NOT NULL
+);
+
+-- Crear la tabla de Habitaciones
+CREATE TABLE Habitaciones (
+    ID INT AUTO_INCREMENT PRIMARY KEY,
+    NumeroHabitacion VARCHAR(10) NOT NULL UNIQUE,
+    Tipo ENUM('sencilla', 'doble', 'suite') NOT NULL,
+    Estado ENUM('disponible', 'reservado', 'en mantenimiento') NOT NULL
+);
+
+-- Crear la tabla de Servicios
+CREATE TABLE Servicios (
+    ID INT AUTO_INCREMENT PRIMARY KEY,
+    Descripcion VARCHAR(255) NOT NULL,
+    Costo DECIMAL(10, 2) NOT NULL
+);
+
+-- Crear la tabla de Reservas
+CREATE TABLE Reservas (
+    ID INT AUTO_INCREMENT PRIMARY KEY,
+    ClienteID INT NOT NULL,
+    HabitacionID INT NOT NULL,
+    FechaEntrada DATE NOT NULL,
+    FechaSalida DATE NOT NULL,
+    Estado ENUM('activa', 'cancelada', 'completada') NOT NULL,
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ID) ON DELETE CASCADE,
+    FOREIGN KEY (HabitacionID) REFERENCES Habitaciones(ID) ON DELETE CASCADE
+);

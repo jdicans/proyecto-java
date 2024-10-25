@@ -1,10 +1,16 @@
 package HotelManagement.src.views;
 
+import HotelManagement.src.db.DatabaseConnection;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class Dashboard extends JFrame {
     private JTable tableClientes;
@@ -28,7 +34,7 @@ public class Dashboard extends JFrame {
         JMenuItem aboutItem = new JMenuItem("Acerca de");
         JMenuItem homeItem = new JMenuItem("Inicio");
 
-        fileMenu.add(homeItem); // Agregar opción de Inicio
+        fileMenu.add(homeItem);
         fileMenu.add(addClientItem);
         fileMenu.add(addRoomItem);
         fileMenu.add(viewReservationsItem);
@@ -145,13 +151,29 @@ public class Dashboard extends JFrame {
             }
         });
 
+        // Cargar los datos al inicializar el Dashboard
+        cargarDatos();
+
         // Acciones de botones de actualización y eliminación
         btnUpdateClient.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 int selectedRow = tableClientes.getSelectedRow();
                 if (selectedRow >= 0) {
                     // Aquí debes implementar la lógica para actualizar el cliente
-                    JOptionPane.showMessageDialog(null, "Actualizar Cliente: " + modelClientes.getValueAt(selectedRow, 1));
+                    int clienteID = (int) modelClientes.getValueAt(selectedRow, 0);
+                    String nuevoNombre = JOptionPane.showInputDialog(Dashboard.this, "Nuevo Nombre", modelClientes.getValueAt(selectedRow, 1));
+                    String nuevosApellidos = JOptionPane.showInputDialog(Dashboard.this, "Nuevos Apellidos", modelClientes.getValueAt(selectedRow, 2));
+                    String nuevoEmail = JOptionPane.showInputDialog(Dashboard.this, "Nuevo Email", modelClientes.getValueAt(selectedRow, 3));
+                    String nuevoTelefono = JOptionPane.showInputDialog(Dashboard.this, "Nuevo Teléfono", modelClientes.getValueAt(selectedRow, 4));
+
+                    // Lógica para actualizar en la base de datos
+                    actualizarCliente(clienteID, nuevoNombre, nuevosApellidos, nuevoEmail, nuevoTelefono);
+
+                    // Actualizar en la tabla
+                    modelClientes.setValueAt(nuevoNombre, selectedRow, 1);
+                    modelClientes.setValueAt(nuevosApellidos, selectedRow, 2);
+                    modelClientes.setValueAt(nuevoEmail, selectedRow, 3);
+                    modelClientes.setValueAt(nuevoTelefono, selectedRow, 4);
                 } else {
                     JOptionPane.showMessageDialog(null, "Selecciona un cliente para actualizar.");
                 }
@@ -162,6 +184,8 @@ public class Dashboard extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 int selectedRow = tableClientes.getSelectedRow();
                 if (selectedRow >= 0) {
+                    int clienteID = (int) modelClientes.getValueAt(selectedRow, 0);
+                    eliminarCliente(clienteID);
                     modelClientes.removeRow(selectedRow);
                 } else {
                     JOptionPane.showMessageDialog(null, "Selecciona un cliente para eliminar.");
@@ -174,7 +198,18 @@ public class Dashboard extends JFrame {
                 int selectedRow = tableHabitaciones.getSelectedRow();
                 if (selectedRow >= 0) {
                     // Aquí debes implementar la lógica para actualizar la habitación
-                    JOptionPane.showMessageDialog(null, "Actualizar Habitación: " + modelHabitaciones.getValueAt(selectedRow, 1));
+                    int habitacionID = (int) modelHabitaciones.getValueAt(selectedRow, 0);
+                    String nuevoNumero = JOptionPane.showInputDialog(Dashboard.this, "Nuevo Número de Habitación", modelHabitaciones.getValueAt(selectedRow, 1));
+                    String nuevoTipo = JOptionPane.showInputDialog(Dashboard.this, "Nuevo Tipo", modelHabitaciones.getValueAt(selectedRow, 2));
+                    String nuevoEstado = JOptionPane.showInputDialog(Dashboard.this, "Nuevo Estado", modelHabitaciones.getValueAt(selectedRow, 3));
+
+                    // Lógica para actualizar en la base de datos
+                    actualizarHabitacion(habitacionID, nuevoNumero, nuevoTipo, nuevoEstado);
+
+                    // Actualizar en la tabla
+                    modelHabitaciones.setValueAt(nuevoNumero, selectedRow, 1);
+                    modelHabitaciones.setValueAt(nuevoTipo, selectedRow, 2);
+                    modelHabitaciones.setValueAt(nuevoEstado, selectedRow, 3);
                 } else {
                     JOptionPane.showMessageDialog(null, "Selecciona una habitación para actualizar.");
                 }
@@ -185,6 +220,8 @@ public class Dashboard extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 int selectedRow = tableHabitaciones.getSelectedRow();
                 if (selectedRow >= 0) {
+                    int habitacionID = (int) modelHabitaciones.getValueAt(selectedRow, 0);
+                    eliminarHabitacion(habitacionID);
                     modelHabitaciones.removeRow(selectedRow);
                 } else {
                     JOptionPane.showMessageDialog(null, "Selecciona una habitación para eliminar.");
@@ -197,7 +234,22 @@ public class Dashboard extends JFrame {
                 int selectedRow = tableReservas.getSelectedRow();
                 if (selectedRow >= 0) {
                     // Aquí debes implementar la lógica para actualizar la reserva
-                    JOptionPane.showMessageDialog(null, "Actualizar Reserva: " + modelReservas.getValueAt(selectedRow, 1));
+                    int reservaID = (int) modelReservas.getValueAt(selectedRow, 0);
+                    String nuevoCliente = JOptionPane.showInputDialog(Dashboard.this, "Nuevo Cliente", modelReservas.getValueAt(selectedRow, 1));
+                    String nuevaHabitacion = JOptionPane.showInputDialog(Dashboard.this, "Nueva Habitación", modelReservas.getValueAt(selectedRow, 2));
+                    String nuevaFechaEntrada = JOptionPane.showInputDialog(Dashboard.this, "Nueva Fecha Entrada", modelReservas.getValueAt(selectedRow, 3));
+                    String nuevaFechaSalida = JOptionPane.showInputDialog(Dashboard.this, "Nueva Fecha Salida", modelReservas.getValueAt(selectedRow, 4));
+                    String nuevoEstado = JOptionPane.showInputDialog(Dashboard.this, "Nuevo Estado", modelReservas.getValueAt(selectedRow, 5));
+
+                    // Lógica para actualizar en la base de datos
+                    actualizarReserva(reservaID, nuevoCliente, nuevaHabitacion, nuevaFechaEntrada, nuevaFechaSalida, nuevoEstado);
+
+                    // Actualizar en la tabla
+                    modelReservas.setValueAt(nuevoCliente, selectedRow, 1);
+                    modelReservas.setValueAt(nuevaHabitacion, selectedRow, 2);
+                    modelReservas.setValueAt(nuevaFechaEntrada, selectedRow, 3);
+                    modelReservas.setValueAt(nuevaFechaSalida, selectedRow, 4);
+                    modelReservas.setValueAt(nuevoEstado, selectedRow, 5);
                 } else {
                     JOptionPane.showMessageDialog(null, "Selecciona una reserva para actualizar.");
                 }
@@ -208,6 +260,8 @@ public class Dashboard extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 int selectedRow = tableReservas.getSelectedRow();
                 if (selectedRow >= 0) {
+                    int reservaID = (int) modelReservas.getValueAt(selectedRow, 0);
+                    eliminarReserva(reservaID);
                     modelReservas.removeRow(selectedRow);
                 } else {
                     JOptionPane.showMessageDialog(null, "Selecciona una reserva para eliminar.");
@@ -216,20 +270,172 @@ public class Dashboard extends JFrame {
         });
     }
 
-    // Métodos para agregar datos en las tablas
-    public void agregarCliente(int id, String nombre, String apellidos, String email, String telefono) {
-        DefaultTableModel model = (DefaultTableModel) tableClientes.getModel();
-        model.addRow(new Object[]{id, nombre, apellidos, email, telefono});
+    // Cargar datos al inicializar el Dashboard
+    private void cargarDatos() {
+        cargarClientes();
+        cargarHabitaciones();
+        cargarReservas();
     }
 
-    public void agregarHabitacion(int id, String numeroHabitacion, String tipo, String estado) {
-        DefaultTableModel model = (DefaultTableModel) tableHabitaciones.getModel();
-        model.addRow(new Object[]{id, numeroHabitacion, tipo, estado});
+    private void cargarClientes() {
+        try (Connection connection = DatabaseConnection.connect()) {
+            String query = "SELECT * FROM Clientes";
+            try (PreparedStatement pstmt = connection.prepareStatement(query);
+                 ResultSet rs = pstmt.executeQuery()) {
+                DefaultTableModel model = (DefaultTableModel) tableClientes.getModel();
+                model.setRowCount(0); // Limpiar la tabla antes de cargar
+                while (rs.next()) {
+                    model.addRow(new Object[]{
+                            rs.getInt("ID"),
+                            rs.getString("Nombre"),
+                            rs.getString("Apellidos"),
+                            rs.getString("Email"),
+                            rs.getString("Telefono")
+                    });
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al cargar clientes: " + e.getMessage());
+        }
     }
 
-    public void agregarReserva(int id, String cliente, String habitacion, String fechaEntrada, String fechaSalida, String estado) {
-        DefaultTableModel model = (DefaultTableModel) tableReservas.getModel();
-        model.addRow(new Object[]{id, cliente, habitacion, fechaEntrada, fechaSalida, estado});
+    private void cargarHabitaciones() {
+        try (Connection connection = DatabaseConnection.connect()) {
+            String query = "SELECT * FROM Habitaciones";
+            try (PreparedStatement pstmt = connection.prepareStatement(query);
+                 ResultSet rs = pstmt.executeQuery()) {
+                DefaultTableModel model = (DefaultTableModel) tableHabitaciones.getModel();
+                model.setRowCount(0); // Limpiar la tabla antes de cargar
+                while (rs.next()) {
+                    model.addRow(new Object[]{
+                            rs.getInt("ID"),
+                            rs.getString("NumeroHabitacion"),
+                            rs.getString("Tipo"),
+                            rs.getString("Estado")
+                    });
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al cargar habitaciones: " + e.getMessage());
+        }
+    }
+
+    private void cargarReservas() {
+        try (Connection connection = DatabaseConnection.connect()) {
+            String query = "SELECT r.ID, CONCAT(c.Nombre, ' ', c.Apellidos) AS Cliente, h.NumeroHabitacion, r.FechaEntrada, r.FechaSalida, r.Estado " +
+                    "FROM Reservas r " +
+                    "JOIN Clientes c ON r.ClienteID = c.ID " +
+                    "JOIN Habitaciones h ON r.HabitacionID = h.ID";
+            try (PreparedStatement pstmt = connection.prepareStatement(query);
+                 ResultSet rs = pstmt.executeQuery()) {
+                DefaultTableModel model = (DefaultTableModel) tableReservas.getModel();
+                model.setRowCount(0); // Limpiar la tabla antes de cargar
+                while (rs.next()) {
+                    model.addRow(new Object[]{
+                            rs.getInt("ID"),
+                            rs.getString("Cliente"),
+                            rs.getString("NumeroHabitacion"),
+                            rs.getDate("FechaEntrada"),
+                            rs.getDate("FechaSalida"),
+                            rs.getString("Estado")
+                    });
+                }
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al cargar reservas: " + e.getMessage());
+        }
+    }
+
+    private void actualizarCliente(int clienteID, String nuevoNombre, String nuevosApellidos, String nuevoEmail, String nuevoTelefono) {
+        try (Connection connection = DatabaseConnection.connect()) {
+            String query = "UPDATE Clientes SET Nombre = ?, Apellidos = ?, Email = ?, Telefono = ? WHERE ID = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+                pstmt.setString(1, nuevoNombre);
+                pstmt.setString(2, nuevosApellidos);
+                pstmt.setString(3, nuevoEmail);
+                pstmt.setString(4, nuevoTelefono);
+                pstmt.setInt(5, clienteID);
+                pstmt.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Cliente actualizado con éxito.");
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al actualizar cliente: " + e.getMessage());
+        }
+    }
+
+    private void eliminarCliente(int clienteID) {
+        try (Connection connection = DatabaseConnection.connect()) {
+            String query = "DELETE FROM Clientes WHERE ID = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+                pstmt.setInt(1, clienteID);
+                pstmt.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Cliente eliminado con éxito.");
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al eliminar cliente: " + e.getMessage());
+        }
+    }
+
+    private void actualizarHabitacion(int habitacionID, String nuevoNumero, String nuevoTipo, String nuevoEstado) {
+        try (Connection connection = DatabaseConnection.connect()) {
+            String query = "UPDATE Habitaciones SET NumeroHabitacion = ?, Tipo = ?, Estado = ? WHERE ID = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+                pstmt.setString(1, nuevoNumero);
+                pstmt.setString(2, nuevoTipo);
+                pstmt.setString(3, nuevoEstado);
+                pstmt.setInt(4, habitacionID);
+                pstmt.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Habitación actualizada con éxito.");
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al actualizar habitación: " + e.getMessage());
+        }
+    }
+
+    private void eliminarHabitacion(int habitacionID) {
+        try (Connection connection = DatabaseConnection.connect()) {
+            String query = "DELETE FROM Habitaciones WHERE ID = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+                pstmt.setInt(1, habitacionID);
+                pstmt.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Habitación eliminada con éxito.");
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al eliminar habitación: " + e.getMessage());
+        }
+    }
+
+    private void actualizarReserva(int reservaID, String nuevoCliente, String nuevaHabitacion, String nuevaFechaEntrada, String nuevaFechaSalida, String nuevoEstado) {
+        try (Connection connection = DatabaseConnection.connect()) {
+            String query = "UPDATE Reservas SET ClienteID = (SELECT ID FROM Clientes WHERE CONCAT(Nombre, ' ', Apellidos) = ?), " +
+                    "HabitacionID = (SELECT ID FROM Habitaciones WHERE NumeroHabitacion = ?), " +
+                    "FechaEntrada = ?, FechaSalida = ?, Estado = ? WHERE ID = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+                pstmt.setString(1, nuevoCliente);
+                pstmt.setString(2, nuevaHabitacion);
+                pstmt.setDate(3, java.sql.Date.valueOf(nuevaFechaEntrada));
+                pstmt.setDate(4, java.sql.Date.valueOf(nuevaFechaSalida));
+                pstmt.setString(5, nuevoEstado);
+                pstmt.setInt(6, reservaID);
+                pstmt.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Reserva actualizada con éxito.");
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al actualizar reserva: " + e.getMessage());
+        }
+    }
+
+    private void eliminarReserva(int reservaID) {
+        try (Connection connection = DatabaseConnection.connect()) {
+            String query = "DELETE FROM Reservas WHERE ID = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+                pstmt.setInt(1, reservaID);
+                pstmt.executeUpdate();
+                JOptionPane.showMessageDialog(this, "Reserva eliminada con éxito.");
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Error al eliminar reserva: " + e.getMessage());
+        }
     }
 
     public static void main(String[] args) {
